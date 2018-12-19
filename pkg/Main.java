@@ -1,51 +1,46 @@
 package pkg;
 import java.io.*;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.lang.*;
-import java.io.IOException;
 
 import pkg.HashMapArr;
 
 public class Main {
   public static void main(String[] args) {
     BufferedReader reader = null;
+    List<String> attrs = new ArrayList<String>();
+    HashMapArr[] hmArr = null;
 
     try {
       // Input file which need to be parsed
-      String fileToParse = "pkg/sampleCSV/" + args[0];
+      String fileToParse = "pkg/sampleCSV/" + args[0] + ".csv";
       // Create file reader
       reader = new BufferedReader(new FileReader(fileToParse));
       
       String line;
-      List<String> attrs = new ArrayList<String>();
-      HashMapArr[] hmArr = null;
-
       // Read column attributes
       line = reader.readLine();
       if (line != null) {
+        // Assumption: there are no newline inside attributes line
         attrs = Arrays.asList(line.split(","));
 
-        // create hashmap array with length
+        // create hashmap array with length of attributes
         hmArr = new HashMapArr[attrs.size()];
       }
 
+      long startTime = System.nanoTime();
       // hashmap array to store the frequency per attribute
-      hmArr = parseCSV(attrs, reader);
+      hmArr = parseCSV(attrs.size(), reader);
+      long stopTime = System.nanoTime();
+      System.out.println( "Parse time: " + ((float)(stopTime - startTime) / 1000000) + " ms" );
 
-      // display the occurent of elements per attribute
-      int colNum = 1;
-      for (HashMapArr hmObj : hmArr) {
-        System.out.println("\nAttribute " + (colNum + 1));
-        colNum++;
 
-        for (Map.Entry<String, Integer> val : hmObj.hm.entrySet()) {
-          System.out.println("Element " + val.getKey() + " occurs: " + val.getValue() + " times");
-        }
-      }
     } catch (IOException e) {
       e.printStackTrace();
       System.out.println("File not found");
@@ -56,12 +51,40 @@ public class Main {
         e.printStackTrace();
         System.out.println("Failed closing the file");
       }
+
+      long startTime = System.nanoTime();
+      writeOutFiles(args[0], attrs, hmArr);
+      long stopTime = System.nanoTime();
+      System.out.println( "Write time: " + ((float)(stopTime - startTime) / 1000000) + " ms" );
+      System.out.println("done");
     }
   }
 
-  private static HashMapArr[] parseCSV(List<String> attrs, BufferedReader reader) {
-    int attrsCount = attrs.size();
-    HashMapArr[] hmArr = new HashMapArr[attrsCount];
+  private static void writeOutFiles(String inputFileName, List<String> attrs, HashMapArr[] hmArr) {
+    try {
+      int colNum = 0;
+      for (HashMapArr hmObj : hmArr) {
+        String filePath = "pkg/sampleCSV/" + inputFileName + "-" + attrs.get(colNum) + "-" + (colNum+1) + ".csv";
+        
+        // delete if file exist
+        File file = new File(filePath);
+        file.delete();
+
+        FileWriter writer = new FileWriter(filePath, true);
+        for (Map.Entry<String, Integer> val : hmObj.hm.entrySet()) {
+          writer.write(val.getKey() + "," + val.getValue() + "\n");
+        }
+        writer.close();
+        colNum++;
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.out.println("Error while writing out files");
+    }
+  }
+
+  private static HashMapArr[] parseCSV(int attrsLen, BufferedReader reader) {
+    HashMapArr[] hmArr = new HashMapArr[attrsLen];
     
     try {
       // Read the file line by line
@@ -73,11 +96,11 @@ public class Main {
         // split by outer comma
         // using sliding window technique
         int r = 0, l = 0, ct = 0, n = line.length();
-        while (ct < attrsCount && r < n) {
-          if (r == n-1 && ct == attrsCount - 1) {
+        while (ct < attrsLen && r < n) {
+          if (r == n-1 && ct == attrsLen - 1) {
             r++;
             break;
-          } else if (r > n && ct < attrsCount) {
+          } else if (r == n && ct < attrsLen) {
             line = reader.readLine();
             s = s + line;
             n = n + line.length(); 
@@ -87,19 +110,28 @@ public class Main {
             ct++;
             r++;
             l = r;
-            
+
+            if (r == n-1 && s.charAt(r) == ',') {
+              r++;
+              break;
+            }       
             // handle newline not in the end of line
-            while (r == n && ct < attrsCount) {
+            while (r == n-1 && ct < attrsLen-1) {
               line = reader.readLine();
               s = s + line;
               n = n + line.length();
             }
           } else if (s.charAt(r) == '"') {
             r++;
+            while (r == n-1 && ct < attrsLen-1) {
+              line = reader.readLine();
+              s = s + line;
+              n = n + line.length();
+            }
             while(s.charAt(r) != '"') {
               r++;
               // handle newline inside quotes
-              while (r == n-1 && ct < attrsCount-1) {
+              while (r == n-1 && ct < attrsLen-1) {
                 line = reader.readLine();
                 s = s + line;
                 n = n + line.length();
@@ -116,9 +148,14 @@ public class Main {
             r++;
           }
         }
-        // if last column is empty value
-        if (ct < attrsCount) {
-          cols.add("");
+        // handle last column
+        if (ct < attrsLen) {
+          // last column is not empty
+          if (l != r) {
+            cols.add(s.substring(l, r));
+          } else {
+            cols.add("");
+          }
         }
 
         countOccurence(hmArr, cols);
