@@ -2,7 +2,7 @@ package pkg;
 import java.util.HashMap;
 
 public class HashMapArr {
-  public static HashMap<String, Integer> hm;
+  public HashMap<String, Integer> hm;
 
   public Integer get(String i) {
     return hm.get(i);
