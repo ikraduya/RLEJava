@@ -2,7 +2,10 @@ package pkg;
 import java.io.*;
 import java.io.File;
 import java.io.IOException;
-import java.util.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
@@ -13,13 +16,15 @@ import pkg.HashMapArr;
 
 public class Main {
   public static void main(String[] args) {
+    System.out.println("RLE-ing...");
+
     BufferedReader reader = null;
     List<String> attrs = new ArrayList<String>();
     HashMapArr[] hmArr = null;
 
     try {
       // Input file which need to be parsed
-      String fileToParse = "pkg/sampleCSV/" + args[0] + ".csv";
+      String fileToParse = args[0];
       // Create file reader
       reader = new BufferedReader(new FileReader(fileToParse));
       
@@ -34,11 +39,11 @@ public class Main {
         hmArr = new HashMapArr[attrs.size()];
       }
 
-      long startTime = System.nanoTime();
+      // long startTime = System.nanoTime();
       // hashmap array to store the frequency per attribute
       hmArr = parseCSV(attrs.size(), reader);
-      long stopTime = System.nanoTime();
-      System.out.println( "Parse time: " + ((float)(stopTime - startTime) / 1000000) + " ms" );
+      // long stopTime = System.nanoTime();
+      // System.out.println( "Parse time: " + ((float)(stopTime - startTime) / 1000000) + " ms" );
 
 
     } catch (IOException e) {
@@ -52,25 +57,29 @@ public class Main {
         System.out.println("Failed closing the file");
       }
 
-      long startTime = System.nanoTime();
+      // long startTime = System.nanoTime();
       writeOutFiles(args[0], attrs, hmArr);
-      long stopTime = System.nanoTime();
-      System.out.println( "Write time: " + ((float)(stopTime - startTime) / 1000000) + " ms" );
+      // long stopTime = System.nanoTime();
+      // System.out.println( "Write time: " + ((float)(stopTime - startTime) / 1000000) + " ms" );
       System.out.println("done");
     }
   }
 
-  private static void writeOutFiles(String inputFileName, List<String> attrs, HashMapArr[] hmArr) {
+  private static void writeOutFiles(String filePathStr, List<String> attrs, HashMapArr[] hmArr) {
     try {
+      Path filePath = Paths.get(filePathStr);
+      String dirPath = filePath.getParent().toString();
+      String fileName = (filePath.getFileName().toString()).replace(".csv", "");
+
       int colNum = 0;
       for (HashMapArr hmObj : hmArr) {
-        String filePath = "pkg/sampleCSV/" + inputFileName + "-" + attrs.get(colNum) + "-" + (colNum+1) + ".csv";
+        String newFilePath = dirPath + "/" + fileName + "-" + attrs.get(colNum) + "-" + (colNum+1) + ".csv";
         
         // delete if file exist
-        File file = new File(filePath);
+        File file = new File(newFilePath);
         file.delete();
 
-        FileWriter writer = new FileWriter(filePath, true);
+        FileWriter writer = new FileWriter(newFilePath, true);
         for (Map.Entry<String, Integer> val : hmObj.hm.entrySet()) {
           writer.write(val.getKey() + "," + val.getValue() + "\n");
         }
