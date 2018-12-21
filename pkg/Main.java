@@ -15,12 +15,17 @@ import java.lang.*;
 import pkg.HashMapArr;
 
 public class Main {
+  static boolean isTesting;
+  static String dirPath;
   public static void main(String[] args) {
     System.out.println("RLE-ing...");
 
     BufferedReader reader = null;
     List<String> attrs = new ArrayList<String>();
     HashMapArr[] hmArr = null;
+    if (args.length == 2 && args[1] != null) {
+      isTesting = (args[1].equals("-test"));
+    }
 
     try {
       // Input file which need to be parsed
@@ -61,19 +66,24 @@ public class Main {
       writeOutFiles(args[0], attrs, hmArr);
       // long stopTime = System.nanoTime();
       // System.out.println( "Write time: " + ((float)(stopTime - startTime) / 1000000) + " ms" );
-      System.out.println("done");
     }
   }
 
   private static void writeOutFiles(String filePathStr, List<String> attrs, HashMapArr[] hmArr) {
+    List<String> newfileNames = new ArrayList<String>();
+    String fileName = null;
+    
     try {
       Path filePath = Paths.get(filePathStr);
-      String dirPath = filePath.getParent().toString();
-      String fileName = (filePath.getFileName().toString()).replace(".csv", "");
+      dirPath = filePath.getParent().toString();
+      fileName = (filePath.getFileName().toString()).replace(".csv", "");
 
       int colNum = 0;
       for (HashMapArr hmObj : hmArr) {
         String newFilePath = dirPath + "/" + fileName + "-" + attrs.get(colNum) + "-" + (colNum+1) + ".csv";
+        if (isTesting) {
+          newfileNames.add(fileName + "-" + attrs.get(colNum) + "-" + (colNum+1) + ".csv");
+        }
         
         // delete if file exist
         File file = new File(newFilePath);
@@ -89,6 +99,53 @@ public class Main {
     } catch (IOException e) {
       e.printStackTrace();
       System.out.println("Error while writing out files");
+    } finally {
+      if (isTesting) {
+        if (checkAnswer(newfileNames)) {
+          System.out.println("Testing... " + fileName + " PASS");
+        } else {
+          System.out.println("Testing... " + fileName + " NOT PASS");
+        }
+      }
+      System.out.println("done");
+    }
+  }
+
+  private static boolean checkAnswer(List<String> fileNames) {
+    BufferedReader reader = null, readerAns = null;
+    boolean pass = false;
+
+    try {
+      String line, lineAns;
+      pass = true;
+      for (String fileName : fileNames) {
+        if (!pass) {
+          break;
+        }
+        reader = new BufferedReader(new FileReader(dirPath + "/" + fileName));
+        readerAns = new BufferedReader(new FileReader(dirPath + "/answer/" + fileName));
+
+        line = reader.readLine();
+        lineAns = readerAns.readLine();
+        while (line != null && lineAns != null) {
+          if (!(line.equals(lineAns))) {
+            pass = false;
+            break;
+          }
+          line = reader.readLine();
+          lineAns = readerAns.readLine();
+        }
+        if ((line == null && lineAns != null) || (line != null && lineAns == null)) {
+          pass = false;
+        }
+        reader.close();
+        readerAns.close();
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+      System.out.println("Error while testing");
+    } finally {
+      return pass;
     }
   }
 
@@ -104,35 +161,21 @@ public class Main {
 
         // split by outer comma
         // using sliding window technique
-        int r = 0, l = 0, ct = 0, n = line.length();
+        int l = 0, r = 0, ct = 0, n = line.length();
         while (ct < attrsLen && r < n) {
-          if (r == n-1 && ct == attrsLen - 1) {
-            r++;
+          // if last column empty
+          if (r == n && ct == attrsLen - 1) {
+            l = r;
             break;
-          } else if (r == n && ct < attrsLen) {
-            line = reader.readLine();
-            s = s + line;
-            n = n + line.length(); 
           }
           if (s.charAt(r) == ',') {
             cols.add(s.substring(l, r));
             ct++;
             r++;
-            l = r;
-
-            if (r == n-1 && s.charAt(r) == ',') {
-              r++;
-              break;
-            }       
-            // handle newline not in the end of line
-            while (r == n-1 && ct < attrsLen-1) {
-              line = reader.readLine();
-              s = s + line;
-              n = n + line.length();
-            }
+            l = r;       
           } else if (s.charAt(r) == '"') {
             r++;
-            while (r == n-1 && ct < attrsLen-1) {
+            while (r >= n-1 && ct < attrsLen-1) {
               line = reader.readLine();
               s = s + line;
               n = n + line.length();
@@ -140,7 +183,7 @@ public class Main {
             while(s.charAt(r) != '"') {
               r++;
               // handle newline inside quotes
-              while (r == n-1 && ct < attrsLen-1) {
+              while (r >= n-1 && ct < attrsLen-1) {
                 line = reader.readLine();
                 s = s + line;
                 n = n + line.length();
@@ -150,6 +193,7 @@ public class Main {
               r++;
             }
             cols.add(s.substring(l, r));
+            System.out.println("khusu: " + s.substring(l, r));
             ct++;
             r++;
             l = r;

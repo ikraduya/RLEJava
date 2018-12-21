@@ -7,6 +7,7 @@ if [ "$1" == "" ]; then
 else
   DIR=$1
   filenames=()
+  # TODO: Performance matrix
   for i in $(find $DIR -maxdepth 1 -type f -iname "*.csv"); do
     ts=$(date +%s%N)
     java pkg/Main "$i"
@@ -15,6 +16,4 @@ else
     echo ""
   done
 fi
-
-# java pkg/Main FoodInspectionsSample
 

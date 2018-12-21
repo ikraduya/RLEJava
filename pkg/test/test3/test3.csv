@@ -1,0 +1,10 @@
+name,comment,age,hobbies
+ikra,"tra la tri",19,fishing
+ikra,"tra la tri",19,"fishing"
+ikra,"tra la tri li","20","fishing"
+,"tra la tri",19,fishing
+,"tra la tri",,fishing
+,"tra la tri",,
+duya,,,"gaming"
+,,,"gaming"
+
