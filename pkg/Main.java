@@ -18,11 +18,13 @@ public class Main {
   static boolean isTesting;
   static String dirPath;
   public static void main(String[] args) {
-    System.out.println("RLE-ing...");
+    System.out.println("RLE-ing " + args[0] + " please wait...");
 
     BufferedReader reader = null;
     List<String> attrs = new ArrayList<String>();
     HashMapArr[] hmArr = null;
+
+    // Setting testing flag
     if (args.length == 2 && args[1] != null) {
       isTesting = (args[1].equals("-test"));
     }
@@ -44,13 +46,8 @@ public class Main {
         hmArr = new HashMapArr[attrs.size()];
       }
 
-      // long startTime = System.nanoTime();
       // hashmap array to store the frequency per attribute
       hmArr = parseCSV(attrs.size(), reader);
-      // long stopTime = System.nanoTime();
-      // System.out.println( "Parse time: " + ((float)(stopTime - startTime) / 1000000) + " ms" );
-
-
     } catch (IOException e) {
       e.printStackTrace();
       System.out.println("File not found");
@@ -62,13 +59,11 @@ public class Main {
         System.out.println("Failed closing the file");
       }
 
-      // long startTime = System.nanoTime();
       writeOutFiles(args[0], attrs, hmArr);
-      // long stopTime = System.nanoTime();
-      // System.out.println( "Write time: " + ((float)(stopTime - startTime) / 1000000) + " ms" );
     }
   }
 
+  // writing out to external file per column
   private static void writeOutFiles(String filePathStr, List<String> attrs, HashMapArr[] hmArr) {
     List<String> newfileNames = new ArrayList<String>();
     String fileName = null;
@@ -79,13 +74,14 @@ public class Main {
       fileName = (filePath.getFileName().toString()).replace(".csv", "");
 
       int colNum = 0;
+      // for every column
       for (HashMapArr hmObj : hmArr) {
         String newFilePath = dirPath + "/" + fileName + "-" + attrs.get(colNum) + "-" + (colNum+1) + ".csv";
         if (isTesting) {
           newfileNames.add(fileName + "-" + attrs.get(colNum) + "-" + (colNum+1) + ".csv");
         }
         
-        // delete if file exist
+        // delete file if exist
         File file = new File(newFilePath);
         file.delete();
 
@@ -107,10 +103,11 @@ public class Main {
           System.out.println("Testing... " + fileName + " NOT PASS");
         }
       }
-      System.out.println("done");
+      System.out.println("done\n");
     }
   }
 
+  // for checking test file
   private static boolean checkAnswer(List<String> fileNames) {
     BufferedReader reader = null, readerAns = null;
     boolean pass = false;
@@ -149,6 +146,7 @@ public class Main {
     }
   }
 
+  // parse csv, return array of hashmap with element as column
   private static HashMapArr[] parseCSV(int attrsLen, BufferedReader reader) {
     HashMapArr[] hmArr = new HashMapArr[attrsLen];
     
@@ -163,11 +161,6 @@ public class Main {
         // using sliding window technique
         int l = 0, r = 0, ct = 0, n = line.length();
         while (ct < attrsLen && r < n) {
-          // if last column empty
-          if (r == n && ct == attrsLen - 1) {
-            l = r;
-            break;
-          }
           if (s.charAt(r) == ',') {
             cols.add(s.substring(l, r));
             ct++;
@@ -175,7 +168,7 @@ public class Main {
             l = r;       
           } else if (s.charAt(r) == '"') {
             r++;
-            while (r >= n-1 && ct < attrsLen-1) {
+            while (r >= n-1 && ct < attrsLen) {
               line = reader.readLine();
               s = s + line;
               n = n + line.length();
@@ -193,7 +186,6 @@ public class Main {
               r++;
             }
             cols.add(s.substring(l, r));
-            System.out.println("khusu: " + s.substring(l, r));
             ct++;
             r++;
             l = r;
@@ -206,7 +198,7 @@ public class Main {
           // last column is not empty
           if (l != r) {
             cols.add(s.substring(l, r));
-          } else {
+          } else {  // last column is empty
             cols.add("");
           }
         }
@@ -228,6 +220,7 @@ public class Main {
     return hmArr;
   }
 
+  // counting the occurence of elements per column
   private static void countOccurence(HashMapArr[] hmArr, List<String> cols) {
     int colSize = cols.size();
     int i = 0;
