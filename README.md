@@ -4,7 +4,7 @@
 javac pkg/*.java
 
 ### Run
-format: ./rlejava.sh \<filepath>
+format: ./rlejava.sh \<filepath>  
 example:
 - ./rlejava.sh data/sampleCSV/
 
@@ -18,7 +18,7 @@ example:
 ./rlejava.sh -test
 
 #### Testing program directly
-format java pkg/Main \<filepath> -test
+format java pkg/Main \<filepath> -test  
 example:
 - java pkg/Main data/test/test1/test1.csv -test
 - java pkg/Main data/test/test2/test2.csv -test
