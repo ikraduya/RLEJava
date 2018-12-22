@@ -1,6 +1,8 @@
 package pkg;
-import java.io.*;
 import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.BufferedReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -9,8 +11,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Map.Entry;
-import java.lang.*;
 
 import pkg.HashMapArr;
 
@@ -141,9 +141,9 @@ public class Main {
     } catch (IOException e) {
       e.printStackTrace();
       System.out.println("Error while testing");
-    } finally {
-      return pass;
     }
+
+    return pass;
   }
 
   // parse csv, return array of hashmap with element as column
@@ -170,16 +170,16 @@ public class Main {
             r++;
             while (r >= n-1 && ct < attrsLen) {
               line = reader.readLine();
-              s = s + line;
-              n = n + line.length();
+              s = s + '\n' + line;
+              n = n + line.length() + 1;
             }
             while(s.charAt(r) != '"') {
               r++;
               // handle newline inside quotes
               while (r >= n-1 && ct < attrsLen-1) {
                 line = reader.readLine();
-                s = s + line;
-                n = n + line.length();
+                s = s + '\n' + line;
+                n = n + line.length() + 1;
               }
             }
             while (r < n && s.charAt(r) != ',') {
