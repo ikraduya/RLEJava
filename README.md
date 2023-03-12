@@ -1,4 +1,4 @@
-# RLEJava
+# Run-length Encoding in Java
 
 #### Compile
 javac pkg/*.java
